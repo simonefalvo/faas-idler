@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: faas-idler
+  labels:
+    app: faas-idler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: faas-idler
+  template:
+    metadata:
+      labels:
+        app: faas-idler
+    spec:
+      serviceAccountName: faas-idler
+      containers:
+      - name: faas-idler
+        image: smvfal/faas-idler:latest
+        imagePullPolicy: Always
+        env:
+          - name: INACTIVITY_DURATION
+            value: "300" # 5 minutes
+          - name: RECONCILE_INTERVAL
+            value: "60"
+          - name: PROMETHEUS_URL
+            value: "http://prometheus.openfaas:9090"
+          - name: GATEWAY_URL
+            value: "http://gateway.openfaas:8080"
