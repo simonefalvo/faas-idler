@@ -35,26 +35,31 @@ func main() {
 		log.Fatal(err.Error())
 	}
 	reconcileInterval := time.Duration(val)
-	log.Printf("reconcile interval: %v", reconcileInterval)
+	log.Printf("reconcile interval: %v seconds", val)
 
 	var metricsProvider metrics.Provider
 	metricsProvider = &metrics.FaasProvider{}
+
 	for {
 
 		// sleep
 		time.Sleep(reconcileInterval * time.Second)
 
 		// retrieve functions
-		log.Print("retrieving available functions...")
-		functions, err := metricsProvider.Functions()
+		log.Print("retrieving scalable functions...")
+		functions, err := scaling.ScalableFunctions()
 		if err != nil {
 			log.Printf("ERROR: %s", err)
 			continue
 		}
-		log.Printf("Functions: %v", functions)
+		if len(functions) == 0 {
+			log.Printf("not found scalable functions")
+			continue
+		}
+		log.Printf("scalable functions: %v", functions)
 
 		// scale idle functions to zero
-		log.Print("scaling idle functions to zero...")
+		log.Print("checking idle functions...")
 		for _, function := range functions {
 			_, err := metricsProvider.FunctionInvocationRate(function, inactivityDuration)
 			if err != nil {
@@ -70,6 +75,8 @@ func main() {
 					log.Printf("ERROR: %s", err)
 					continue
 				}
+			} else {
+				log.Printf("not found idle functions")
 			}
 		}
 	}
